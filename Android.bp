@@ -1,0 +1,39 @@
+android_library_import {
+    name: "prebuilt-play-services-base",
+    aars: ["libs/aar/play-services-base-16.0.1.aar"],
+    sdk_version: "current",
+    static_libs: [
+    ],
+}
+
+android_library_import {
+    name: "prebuilt-play-services-basement",
+    aars: ["libs/aar/play-services-basement-16.0.1.aar"],
+    sdk_version: "current",
+    static_libs: [
+    ],
+}
+
+android_library_import {
+    name: "prebuilt-play-services-location",
+    aars: ["libs/aar/play-services-location-16.0.0.aar"],
+    sdk_version: "current",
+    static_libs: [
+    ],
+}
+
+android_library_import {
+    name: "prebuilt-play-services-places-placereport",
+    aars: ["libs/aar/play-services-places-placereport-16.0.0.aar"],
+    sdk_version: "current",
+    static_libs: [
+    ],
+}
+
+android_library_import {
+    name: "prebuilt-play-services-task",
+    aars: ["libs/aar/play-services-tasks-16.0.1.aar"],
+    sdk_version: "current",
+    static_libs: [
+    ],
+}
