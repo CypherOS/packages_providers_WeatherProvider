@@ -31,8 +31,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 	prebuilt-okio
 
 LOCAL_STATIC_JAVA_AAR_LIBRARIES := \
+    prebuilt-play-services-basement \
     prebuilt-play-services-base \
-	prebuilt-play-services-basement \
 	prebuilt-play-services-location \
 	prebuilt-play-services-places-placereport \
 	prebuilt-play-services-task
@@ -51,8 +51,6 @@ LOCAL_CERTIFICATE := platform
 LOCAL_PRIVILEGED_MODULE := true
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_AAPT_FLAGS := --auto-add-overlay
-LOCAL_MANIFEST_FILE := AndroidManifest.xml
 include $(BUILD_PACKAGE)
 
 include $(CLEAR_VARS)
