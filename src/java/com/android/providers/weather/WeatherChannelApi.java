@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2018 Pixel Experience
+ * Copyright (C) 2018 CypherOS
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +19,9 @@ package com.android.providers.weather;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
@@ -26,13 +30,6 @@ import android.util.Log;
 import com.android.providers.weather.utils.Constants;
 import com.android.providers.weather.utils.Utilities;
 
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnCanceledListener;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.luckycatlabs.sunrisesunset.SunriseSunsetCalculator;
 
 import org.jsoup.Jsoup;
@@ -60,64 +57,38 @@ import static com.android.providers.weather.utils.Constants.DEBUG;
 import static com.android.providers.weather.WeatherProvider.WEATHER_UPDATE_ERROR;
 import static com.android.providers.weather.WeatherProvider.WEATHER_UPDATE_SUCCESS;
 
-public class WeatherChannelApi implements OnFailureListener, OnCanceledListener {
+public class WeatherChannelApi implements LocationListener {
+
     private String TAG = "WeatherChannelApi";
-    private boolean running;
-    private LocationResult mLocationResult;
+    private boolean mRunning;
     private Handler mHandler;
-    private FusedLocationProviderClient mFusedLocationClient;
-    private LocationRequest mLocationRequest;
     private Context mContext;
     private String mSunCondition;
 
-    private LocationCallback locationCallback = new LocationCallback() {
-        @Override
-        public void onLocationResult(LocationResult locationResult) {
-            if (DEBUG) Log.d(TAG, "onLocationResult");
-            mHandler.removeCallbacks(removeLocationUpdatesRunnable);
-            mFusedLocationClient.removeLocationUpdates(this);
-            mLocationResult = locationResult;
-            running = false;
-        }
-    };
-    private Runnable removeLocationUpdatesRunnable = new Runnable() {
+	protected Location mLastLocation;
+	private LocationManager mLocationManager;
+	private WeatherChannelApi sInstance = null;
+
+	private Runnable removeLocationUpdates = new Runnable() {
         @Override
         public void run() {
-            if (DEBUG) Log.d(TAG, "removeLocationUpdatesRunnable");
-            mFusedLocationClient.removeLocationUpdates(locationCallback);
-            mLocationResult = null;
-            running = false;
+            if (DEBUG) Log.d(TAG, "removeLocationUpdates");
+			mLocationManager.removeUpdates(sInstance);
+			mLastLocation = null;
+			mRunning = false;
+			sInstance = null;
         }
     };
 
-    @Override
-    public void onFailure(@NonNull Exception e) {
-        if (DEBUG) Log.d(TAG, "onFailure");
-        mHandler.removeCallbacks(removeLocationUpdatesRunnable);
-        mFusedLocationClient.removeLocationUpdates(locationCallback);
-        mLocationResult = null;
-        running = false;
-    }
-
-    @Override
-    public void onCanceled() {
-        if (DEBUG) Log.d(TAG, "onCanceled");
-        mHandler.removeCallbacks(removeLocationUpdatesRunnable);
-        mFusedLocationClient.removeLocationUpdates(locationCallback);
-        mLocationResult = null;
-        running = false;
-    }
-
     WeatherChannelApi(Context context) {
-        running = false;
+        mRunning = false;
         mHandler = new Handler(Looper.getMainLooper());
-        mLocationRequest = new LocationRequest().setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
+		mLocationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         mContext = context;
     }
 
     boolean isRunning() {
-        return running;
+        return mRunning;
     }
 
     private final Interceptor REWRITE_RESPONSE_INTERCEPTOR = new Interceptor() {
@@ -150,13 +121,17 @@ public class WeatherChannelApi implements OnFailureListener, OnCanceledListener 
     };
 
     WeatherProvider getResult() {
-        if (isRunning() || mLocationResult == null || mLocationResult.getLastLocation() == null) {
+        if (isRunning()) {
+			Log.d(TAG, "Query thread is still running");
             return new WeatherProvider(WEATHER_UPDATE_ERROR, "", 0, 0);
         }
-        Location location = mLocationResult.getLastLocation();
-        if (DEBUG) Log.d(TAG, "getResult");
-        if (DEBUG)
-            Log.d(TAG, "latitude=" + location.getLatitude() + ",longitude=" + location.getLongitude());
+		Location location = mLastLocation != null ? mLastLocation : mLocationManager.getLastLocation();
+		if (location == null) {
+			Log.d(TAG, "Last location is null");
+            return new WeatherProvider(WEATHER_UPDATE_ERROR, "", 0, 0);
+		}
+        Log.d(TAG, "Getting weather results");
+        if (DEBUG) Log.d(TAG, "latitude=" + location.getLatitude() + ",longitude=" + location.getLongitude());
         OkHttpClient httpClient = new OkHttpClient.Builder()
                 .connectTimeout(30, TimeUnit.SECONDS)
                 .writeTimeout(30, TimeUnit.SECONDS)
@@ -305,13 +280,49 @@ public class WeatherChannelApi implements OnFailureListener, OnCanceledListener 
 
     @SuppressLint("MissingPermission")
     void queryLocation() {
-        if (running) {
+        if (mRunning) {
             return;
         }
-        running = true;
-        mLocationResult = null;
-        mFusedLocationClient.requestLocationUpdates(mLocationRequest, locationCallback, Looper.getMainLooper()).addOnCanceledListener(this).addOnFailureListener(this);
-        mHandler.postDelayed(removeLocationUpdatesRunnable, Constants.LOCATION_QUERY_MAX_TIME);
+        mRunning = true;
+		if (sInstance == null) {
+			sInstance = new WeatherChannelApi(mContext);
+		}
+		mLocationManager.requestLocationUpdates(null, this, Looper.getMainLooper());
+		// Request the device's location immediately if a previous location isn't available.
+        if (mLocationManager.getLastLocation() == null) {
+            if (mLocationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                mLocationManager.requestSingleUpdate(
+                        LocationManager.NETWORK_PROVIDER, this, Looper.getMainLooper());
+            } else if (mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                mLocationManager.requestSingleUpdate(
+                        LocationManager.GPS_PROVIDER, this, Looper.getMainLooper());
+            }
+        }
+        mHandler.postDelayed(removeLocationUpdates, Constants.LOCATION_QUERY_MAX_TIME);
+    }
+	
+	@Override
+    public void onLocationChanged(Location location) {
+        if (location != null
+                && !(location.getLongitude() == 0.0 && location.getLatitude() == 0.0)) {
+            Log.d(TAG, "onLocationChanged:"
+                    + " provider=" + location.getProvider()
+                    + " accuracy=" + location.getAccuracy()
+                    + " time=" + location.getTime());
+            mLastLocation = location;
+        }
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
     }
 }
 
