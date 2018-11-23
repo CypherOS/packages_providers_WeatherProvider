@@ -30,16 +30,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 	prebuilt-okhttp \
 	prebuilt-okio
 
-LOCAL_STATIC_JAVA_AAR_LIBRARIES := \
-    prebuilt-play-services-base \
-	prebuilt-play-services-basement \
-	prebuilt-play-services-location \
-	prebuilt-play-services-places-placereport \
-	prebuilt-play-services-task
-
 LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
-LOCAL_RESOURCE_DIR += $(foreach lib, $(LOCAL_STATIC_JAVA_AAR_LIBRARIES),\
-  $(call intermediates-dir-for,JAVA_LIBRARIES,$(lib),,COMMON)/aar/res)
 
 LOCAL_USE_AAPT2 := true
 LOCAL_PROGUARD_ENABLED := disabled
@@ -51,49 +42,7 @@ LOCAL_CERTIFICATE := platform
 LOCAL_PRIVILEGED_MODULE := true
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_AAPT_FLAGS := --auto-add-overlay
-LOCAL_MANIFEST_FILE := AndroidManifest.xml
 include $(BUILD_PACKAGE)
-
-include $(CLEAR_VARS)
-LOCAL_MODULE_CLASS := JAVA_LIBRARIES
-LOCAL_MODULE := prebuilt-play-services-base
-LOCAL_SRC_FILES := libs/aar/play-services-base-16.0.1.aar
-LOCAL_UNINSTALLABLE_MODULE := true
-LOCAL_SDK_VERSION := current
-include $(BUILD_PREBUILT)
-
-include $(CLEAR_VARS)
-LOCAL_MODULE_CLASS := JAVA_LIBRARIES
-LOCAL_MODULE := prebuilt-play-services-basement
-LOCAL_SRC_FILES := libs/aar/play-services-basement-16.0.1.aar
-LOCAL_UNINSTALLABLE_MODULE := true
-LOCAL_SDK_VERSION := current
-include $(BUILD_PREBUILT)
-
-include $(CLEAR_VARS)
-LOCAL_MODULE_CLASS := JAVA_LIBRARIES
-LOCAL_MODULE := prebuilt-play-services-location
-LOCAL_SRC_FILES := libs/aar/play-services-location-16.0.0.aar
-LOCAL_UNINSTALLABLE_MODULE := true
-LOCAL_SDK_VERSION := current
-include $(BUILD_PREBUILT)
-
-include $(CLEAR_VARS)
-LOCAL_MODULE_CLASS := JAVA_LIBRARIES
-LOCAL_MODULE := prebuilt-play-services-places-placereport
-LOCAL_SRC_FILES := libs/aar/play-services-places-placereport-16.0.0.aar
-LOCAL_UNINSTALLABLE_MODULE := true
-LOCAL_SDK_VERSION := current
-include $(BUILD_PREBUILT)
-
-include $(CLEAR_VARS)
-LOCAL_MODULE_CLASS := JAVA_LIBRARIES
-LOCAL_MODULE := prebuilt-play-services-task
-LOCAL_SRC_FILES := libs/aar/play-services-tasks-16.0.1.aar
-LOCAL_UNINSTALLABLE_MODULE := true
-LOCAL_SDK_VERSION := current
-include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE_CLASS := JAVA_LIBRARIES
