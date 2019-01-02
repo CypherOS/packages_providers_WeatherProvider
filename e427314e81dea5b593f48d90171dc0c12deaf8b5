@@ -1,0 +1,7 @@
+Code-Review+2: Chris Crump <chris@cypheros.co>
+Verified+1: Chris Crump <chris@cypheros.co>
+Submitted-by: Chris Crump <chris@cypheros.co>
+Submitted-at: Wed, 02 Jan 2019 06:19:35 -0700
+Reviewed-on: https://gerrit.cypheros.co/8129
+Project: CypherOS/packages_providers_WeatherProvider
+Branch: refs/heads/poundcake-release
