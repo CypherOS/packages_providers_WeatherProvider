@@ -17,7 +17,7 @@ package com.android.providers.weather.utils;
 
 public class Constants {
 
-    public static final Boolean DEBUG = false;
+    public static final Boolean DEBUG = true;
     public static final long LOCATION_QUERY_MAX_TIME = 20000; // 20 seconds on milliseconds
     public static final int API_CACHE_NO_CONNECTION_MAX_TIME = 3600; // 1 hour on seconds if no internet available
 }
