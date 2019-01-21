@@ -9,10 +9,6 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
-    <permission
-        android:name="com.android.providers.weather.READ_WEATHER"
-        android:protectionLevel="signature|privileged" />
-
     <application
         android:allowBackup="false"
         android:allowClearUserData="false"
@@ -23,8 +19,7 @@
         <provider
             android:name=".WeatherContentProvider"
             android:authorities="com.android.providers.weather.provider"
-            android:exported="true"
-            android:readPermission="com.android.providers.weather.READ_WEATHER" />
+            android:exported="true" />
 
         <meta-data
             android:name="com.google.android.gms.version"
